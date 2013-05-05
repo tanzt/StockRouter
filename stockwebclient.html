@@ -1,0 +1,750 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <title>Real Stock Exchange Demo</title>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+  <script src="/socket.io/socket.io.js"></script>
+  <link rel="stylesheet" href="css/demo.css" />
+  <script type="text/javascript">
+
+	var socket = io.connect('http://localhost:8888');
+	socket.on('user message',function(msg){      //接收Server端发送来的消息
+        onMessage(msg);                                 //将接收来的消息实时渲染出来
+	});
+
+	var stockRowIndexes = {};
+	function onMessage(message) {
+          var msgstr = message;
+		  var box = document.getElementById('box');
+          var fields = msgstr.split(',');
+//{"change":1.102342887230417E-19,"company":"Apple Inc","exchangeDate":"2013-05-03 01:05:12","exchangeShares":200,"exchangeType":"S","percentChange":0.21826677989959717,"price":114.84913145998006,"tickerSymbol":"NASDAQ:AAPL"}************
+
+              var company = fields[1].split(':')[1].replace('\"',"").replace('\"',"");
+              var ticker  = fields[7].split(':')[1].replace('\"',"").replace('\"',"").replace('}',"");
+              var price   = fields[6].split(':')[1];
+              var change  = fields[0].split(':')[1];
+              var percent = fields[5].split(':')[1];
+              // lookup the table row
+              var stockRowIndex = stockRowIndexes[company];
+				box.innerHTML += message + '<br>';                       //输出到log日志中
+              var stockRow = stockTable.rows[stockRowIndex];
+
+              // lazily populate the table row, with 5 cells
+              if (stockRow === undefined) {
+                var stockRowIndex = stockTable.rows.length;
+                stockRow = stockTable.insertRow(stockRowIndex);
+                for (var cell=0; cell < 5; cell++) {
+                    stockRow.insertCell(cell);
+                }
+                stockRow.cells[0].className = 'company';
+                stockRow.cells[1].className = 'ticker';
+                stockRow.cells[2].className = 'price';
+                stockRow.cells[3].className = 'change';
+                stockRow.cells[4].className = 'percent';
+                stockRowIndexes[company] = stockRowIndex;
+              }
+
+              // detect price change
+              var oldPrice = Number(stockRow.cells[2].innerHTML);
+              var oldChange = Number(stockRow.cells[3].innerHTML);
+              // update the table row cell data
+              stockRow.cells[0].innerHTML = company;
+              stockRow.cells[1].innerHTML = ticker;
+              stockRow.cells[2].innerHTML = Number(price).toFixed(2);
+              stockRow.cells[3].innerHTML = Number(change);
+              stockRow.cells[4].innerHTML = Number(percent*100).toFixed(2);
+
+              // update the table row cell styles
+              var oldSign = (oldChange != 0) ? oldChange / Math.abs(oldChange) : 0;
+              var sign = (change != 0) ? change / Math.abs(change) : 0;
+              if (sign != oldSign) {
+                switch (sign) {
+                case 1:
+                    stockRow.cells[3].className = 'upChange';
+                    stockRow.cells[4].className = 'upPercent';
+                    break;
+                case -1:
+                    stockRow.cells[3].className = 'downChange';
+                    stockRow.cells[4].className = 'downPercent';
+                    break;
+                }
+              }
+            }
+
+</script>
+ </head>
+
+ <body  style="background-color:transparent" >
+	<h2>Real Stock Exchange information</h2>
+    <div id="table_header"  align=center>
+        <span class="info" > a demo of a Web client that exchange with a NodeJS message broker to receive stock info and display. </span>
+        <table id="stockTable" class="stockTable" cellSpacing="0" >
+            <thead>
+            <tr>
+                <th class="company" width="20%">Company</th>
+                <th class="ticker" width="150px">Ticker</th>
+                <th class="price" width="150px">Price</th>
+                <th class="change" width="150px">Change</th>
+                <th class="percent" width="200px">% Change</th>
+            </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+        <br>
+    </div> <!-- table_header -->
+    <span class="info" >log: Received real stock info from NodeJS Middleware. </span>
+    <div id='box' ></div>
+ </body>
+
+
+ <style type="text/css">
+
+
+ body{
+     font-family: Helvetica, Arial, sans-serif;
+     color:#000000;
+     width:800px;
+     height:600px;
+     margin:0
+     auto;
+ }
+ #innerWrapper {
+     margin:0 auto; text-align:center;
+     padding: 10px;
+ }
+
+ #overall_frame {
+     position:relative;
+     left: 115px;
+     width: 970px;
+ }
+ #box {
+     overflow: auto;
+     width:800px;height:200px;border:1px solid #dcdcdc;
+ }
+
+ #logtittle{
+     overflow: auto;
+ }
+
+ #wrapper {
+     position:relative;
+     /*        float:inherit;*/
+     /*        text-align:left;*/
+     background: white;
+     margin: 20px auto;
+     width: 920px;
+ }
+
+ p {
+     /* setup some more readable paragraph spacing */
+     margin-top: 0px;
+     margin-bottom: 10px;
+ }
+ p.code {
+     font-family:"Courier New", Courier, monospace;
+     color:#FFFFFF;
+     background-color:#44687d;
+     margin: 0px 20px 10px 10px;
+     padding: 10px 10px;
+ }
+
+ h1,h2, h3, h4, h5 {
+     /* Kaazing blue */
+     color: #44687d;
+     /* setup some more readable header spacing */
+     padding-bottom: 5px;
+     margin: 5px 0 5px 0;
+     text-align:left;
+ }
+ h1 {
+     font-size: 200%;
+ }
+ h2 {        font-size: 175%;
+     text-align:left;
+ }
+
+ h3 {
+     font-size: 150%;
+     /* Kaazing Web Orange */
+     color: #f37333;
+ }
+
+ h4 {
+     font-size: 120%;
+ }
+
+ h5 {
+     font-size: 110%;
+     font-weight: bolder;
+ }
+
+ a {
+     text-decoration: none;
+ }
+
+ a:hover {
+     text-decoration: none;
+ }
+
+ ul.arrow-2 li {
+     list-style: none;
+     padding-left: 25px;
+     padding-bottom: 5px;
+ }
+
+ img {
+     border: 0px none;
+ }
+
+ pre {
+     margin-top: 0px;
+     margin-bottom: 0px;
+ }
+
+     /* @group Notice Styles */
+
+ span.alert, div.alert,
+ span.info, div.info,
+ span.download, div.download,
+ span.note, div.note {
+     display: block;
+     padding: 10px 0px 10px 45px;
+ }
+
+ span.alert, div.alert {
+     color: #c00;
+     border-top: 3px solid #fe7b7a;
+     border-bottom: 3px solid #fe7b7a;
+     margin: 0px 0px 10px 0px;
+ }
+
+ span.info, div.info {
+     color: #44687d;
+     border-top: 3px solid #44687d;
+     border-bottom: 3px solid #44687d;
+     margin: 0px 0px 10px 0px;
+ }
+
+
+ span.note, div.note {
+     color: #cd5a13;
+     border-top: 3px solid #f37333;
+     border-bottom: 3px solid #f37333;
+     margin: 0px 0px 10px 0px;
+ }
+
+ span.download, div.download {
+     color: #5a8e22;
+     border-top: 3px solid #5a8e22;
+     border-bottom: 3px solid #5a8e22;
+     margin: 0px 0px 10px 0px;
+ }
+
+     /* @end */
+
+     /* @Code formatting for span elements */
+ span.code, div.code {
+     font-family:"Courier New", Courier, monospace;
+     color:#FFFFFF;
+     background-color:#44687d;
+     margin: 0px 0px 10px 0px;
+     padding: 10px 20px;
+ }
+     /* @end */
+
+
+ #overall_frame {
+     position:relative;
+     left: 115px;
+     width: 970px;
+ }
+
+ #wrapper {
+     position:relative;
+     float:left;
+     margin: 0pt auto;
+     text-align:left;
+     padding: 0pt;
+ }
+
+ #header {
+     height: 98px;
+     background-repeat:no-repeat;
+ }
+
+ #menu {
+     position:relative;
+     top: 6px;
+     left: 15px;
+     height: 80px;
+     width:970px;
+ }
+
+ #menu a.enterprise {
+     color:#C0C0C0;
+ }
+
+ #menu a {
+     color:#FFFFFF;
+ }
+
+ #menu a:hover {
+     color:#FFFF00;
+ }
+
+ #menu li {
+     list-style-type: none;
+     line-height:85%;
+ }
+
+ #menu .demoCategory {
+     color:#FFFFFF;
+     font-style:italic;
+     font-weight:lighter;
+     font-size:80%;
+     padding-top: 3px;
+     padding-bottom: 2px;
+ }
+
+ #menu .demoCategory a {
+     font-style:normal;
+     font-weight:bold;
+ }
+
+ #menu ul ul li {
+     color: #FFFFFF;
+     list-style-type: circle;
+ }
+
+ #menu ul ul li a {
+     font-style:normal;
+     font-weight:bold;
+     padding: 0px 20px 0px 0px;
+     font-size:smaller;
+ }
+
+ #menu ul {
+     margin:0;
+     float: left;
+     padding-left: 15px;
+ }
+
+ #menu #demoIndex {
+     float: none;
+     padding-left: 0px;
+     position: absolute;
+     bottom: 0px;
+     right: 26px;
+ }
+
+ #content {
+     position:relative;
+     margin: 0px 0px;
+     width:100%;
+ }
+
+     /*
+     #main_home {
+         background: url(../images/side_banner.jpg) top right no-repeat;
+             position:relative;
+             padding: 0px 130px 10px 20px;
+             }
+     */
+
+ #main {
+     position:relative;
+     top: 10px;
+     left: 20px;
+     width:930px;
+     height: 620px;
+ }
+
+ #main_header {
+     position:relative;
+     float:left;
+     padding: 0px 0px;
+     width: 800px;
+ }
+
+ #table_header {
+     position:relative;
+     float:left;
+     padding: 0px 0px;
+     width: 800px;
+     height: 360px;
+ }
+
+ label, .label {
+     float: left;
+     width: 120px;
+     font-weight: bold;
+ }
+
+ input {
+     width: 180px;
+     margin-bottom: 5px;
+     clear:right;
+ }
+
+ select {
+     margin-bottom: 5px;
+ }
+
+ textarea{
+     width: 250px;
+     height: 150px;
+     margin-bottom: 5px;
+     clear:right;
+ }
+
+ .boxes{
+     width: 1em;
+ }
+
+ br{
+     clear: left;
+ }
+
+ #login_div {
+     position:relative;
+     float:left;
+     padding: 0px 0px 10px 0px;
+     width:380px;
+     height: 200px;
+ }
+
+ #subscribe_div {
+     position:relative;
+     float:left;
+     padding: 0px 0px 10px 10px;
+     width: 420px;
+     height: 200px;
+ }
+
+ #exchange_div {
+     position:relative;
+     float:left;
+     padding: 0px 0px 10px 10px;
+     width: 420px;
+     height: 210px;
+ }
+
+ #transaction_div {
+     position:relative;
+     float:left;
+     padding: 0px 0px 10px 0px;
+     width: 380px;
+     height: 180px;
+ }
+
+ #console_div {
+     position:relative;
+     float:left;
+     padding: 0px 0px 10px 10px;
+     width: 420px;
+ }
+
+ #connect_div {
+     position:relative;
+     float:left;
+     padding: 0px 0px 10px 0px;
+     width:380px;
+     height: 100px;
+ }
+
+ #console {
+     position:relative;
+     float:left;
+     overflow-y: scroll;
+     width: 420px;
+     height: 170px;
+ }
+
+     /*
+     #footer {
+             position:relative;
+             height: 124px;
+             background: url(../images/footer.png) 100% 0 repeat-x;
+             }
+     */
+
+ #chat_select {
+     position:relative;
+     float:left;
+     padding: 0px 0px 10px 0px;
+     width:258px;
+     height: 500px;
+ }
+
+ #chat_roster {
+     position:relative;
+     float:left;
+     padding: 0px 0px 10px 10px;
+     width:300px;
+     height: 500px;
+
+ }
+
+ #chat_messages {
+     position:relative;
+     float:left;
+     padding: 0px 0px 10px 10px;
+     width:300px;
+     height: 500px;
+ }
+
+ #pds_messages {
+     position: relative;
+     float: left;
+     padding: 0px 0px 10px 10px;
+     width: 610px;
+     height: 500px;
+ }
+
+ #pds_messages .chat_text {
+     height: 285px;
+ }
+
+ #pds_messages .chat_window {
+     margin: 0px 0px;
+ }
+
+ #openfire {
+     position:absolute;
+     float:left;
+     padding: 0px 0px 10px 0px;
+     width:258px;
+     height: 400px;
+ }
+
+ #gtalk {
+     position:absolute;
+     float:left;
+     padding: 0px 0px 10px 0px;
+     width: 258px;
+     height: 400px;
+ }
+
+
+ #roster {
+     position:relative;
+     float:left;
+     padding: 0px 0px 5px 10px;
+     width:265px;
+     height: 370px;
+     background: #ffffff;
+     border: 3px ridge #f37333;
+     margin-left: 10px;
+     margin-bottom: 5px;
+     overflow-y: scroll;
+ }
+
+ .chat_prompt {
+     color: #44687d;
+ }
+
+ .chat_friend {
+     border-bottom: 1px dotted #44687d;
+     margin-right: 12px;
+     color: #44687d;
+ }
+
+ .chat_friend a:visited {
+     color: #44687d;
+ }
+
+ .chat_friend:hover {
+ }
+
+
+ .chat_status, .chat_show {
+     font-size: 10px;
+ }
+
+ .chat_show {
+     font-weight: bold;
+ }
+
+ .chat_show_available, .chat_show_chat {
+     color: green;
+ }
+
+ .chat_show_dnd {
+     color: red;
+ }
+
+ .chat_show_xa, .chat_show_away {
+     color: orange;
+ }
+
+ .chat_show_offline {
+     color: gray;
+ }
+
+ .chat_window {
+     height: 420px;
+     margin: 0px 10px 0px 10px;
+ }
+
+ .chat_text {
+     display: block;
+     border: 3px ridge #f37333;
+     margin-bottom: 5px;
+     height: 375px;
+     overflow-y: scroll;
+ }
+
+ .chat_address {
+     padding: 0px 0px 0px 0px;
+     margin: 0px 0px 0px 0px;
+     height: 45px;
+ }
+
+ .chat_textentry {
+     padding: 0px 0px 0px 0px;
+     margin-bottom: 0px;
+     margin: 0px 0px 0px 0px;
+ }
+
+
+ .chat_line, .chat_me, .chat_user1, .chat_user2, .chat_user3, .chat_user4, .chat_user5 {
+     font-size: 14px;
+ }
+
+ .chat_line {
+ }
+
+ .chat_me, .chat_me a:visited {
+     color: #f37333;
+ }
+
+ .chat_user1, .chat_user1 a:visited {
+     color: #44687d;
+ }
+
+ .chat_user2, .chat_user2 a:visited {
+     color: #7d5743;
+ }
+
+ .chat_user3, .chat_user3 a:visited {
+     color: #83c9f2;
+ }
+
+ .chat_user4, .chat_user4 a:visited {
+     color: #f2cbb6;
+ }
+
+ .chat_user5, .chat_user5 a:visited {
+     color: #33acf2;
+ }
+
+ .tdHeader{
+     text-align:left;
+ }
+
+ .stockTable {
+     font-size: 14px;
+     border-color: #44687d;
+ }
+
+ .stockTable th {
+     color: #ffffff;
+     background-color: #ff5113;
+     border-color: #cccccc;
+     border-width: 0px 1px 1px 0px;
+     border-style: solid;
+     padding-bottom: 3px;
+ }
+
+ .stockTable tr td {
+     height: 22px;
+     border-color: #cccccc;
+     border-width: 0px 0px 1px 0px;
+     border-style: solid;
+ }
+
+ .company {
+     text-align:left;
+     padding-left:10px;
+ }
+
+ .ticker {
+     text-align:left;
+     padding-left:10px;
+ }
+
+ .change {
+     text-align:right;
+     padding-right:10px;
+ }
+
+ .percent {
+     text-align:right;
+     padding-right:10px;
+ }
+
+ .price {
+     text-align:right;
+     padding-right:10px;
+ }
+
+ .upChange {
+     background:url(http://demo.kaazing.com/resources/images/up.png) center left no-repeat;
+     position:relative;
+
+     font-weight:bold;
+     color:green;
+     text-align:right;
+     padding-right:10px;
+ }
+
+ .downChange {
+     background:url(http://demo.kaazing.com/resources/images/down.png) center left no-repeat;
+     position:relative;
+
+     font-weight:bold;
+     color:red;
+     text-align:right;
+     padding-right:10px;
+ }
+
+ .upPercent {
+     font-weight:bold;
+     color:green;
+     text-align:right;
+     padding-right:10px;
+ }
+
+ .downPercent {
+     font-weight:bold;
+     color:red;
+     text-align:right;
+     padding-right:10px;
+ }
+
+ #commands_div {
+     position:relative;
+     float:left;
+     height:255px;
+     padding-left:5px
+ }
+
+ .activeHelpText{
+     background-color:#FFFFFF;
+     border:1px solid black;
+     color:#999999;
+     text-align:center;
+
+ }
+
+ .inactiveHelpText {
+     background-color:#FFFFFF;
+     border:1px solid black;
+     color:#000000;
+     text-align:center;
+ }
+ </style>
+</html>
+
